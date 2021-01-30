@@ -1,0 +1,51 @@
+gcc 是linux平台编译器的事实标准
+
+1.程序的编译过程
+    * 预处理（pre-processing）
+    * 编译 (compiling)
+    * 汇编 (Assembling)
+    * 链接（Linking)
+
+    1.预处理 主要主要处理源文件中#ifdef #include #define 预处理命令
+        #gcc -E test.c  -o test.i  生成中间文件
+
+    2.编译
+        #gcc -S test.i -o test.s  生产汇编语言文件*.s
+    3.汇编
+        #gcc -c test.s  -o test.o  生成二进制机器代码*.o
+    4.链接
+        #gcc test.o  -o test   与其他机器代码文件和库文件汇集生成可执行的二进制代码文件
+
+     对于上述过程可以简化：
+     #gcc -c test.c -o test.o
+     #gcc test.o -o test
+      或
+     #gcc test.c -o test
+
+    编译多个文件  (所有被编译的源文件中有且只有一个main函数。如果编译成目标文件main函数不是必须的，因为不会最后一步链接)
+    #gcc -o test  testmain.c other1.c other2.c
+
+
+
+    gcc 常用选项
+    gcc [options] [filename]
+
+    -c 只编译，不链接成可执行文件(通常用于编译不包含主程序的子程序文件)
+    -o  输出文件的名称 ，默认生成a.out
+    -g 产生调试器gdb所必需的符号信息
+    -O 对程序优化编译和链接，但编译和链接的速度慢
+    -O2 对程序优化编译和链接比-O好，但编译和链接的速度更慢
+    -Wall 输出所有警告信息，提示这个地方是不是有什么错误
+    -w 关闭所有警告
+    -Idirname 将名为dirname的目录加入到程序头文件目录列表中，在预处理阶段使用的选项
+    对应 include ""形式包含的文件如果当前目录中没有找到需要的头文件，就到指定的dirname
+    目录中寻找
+
+    -Ldirname 讲名为dirname的目录加入到程序库文件搜索目录列表中，在链接过程中使用的参数
+    库是事先已经编写好的代码，经过编译后直接可以调用的文件，编译器默认在/usr/lib 搜索需要
+    的库文件，-L告诉编译器到指定的目录dirname寻找，然后到系统默认的路径中寻找，如果函数库存
+    放在多个目录下面，就需要依次使用该选项
+
+    -lname 指示编译器，在链接时候装载名为libname.a的函数库，该函数库位于系统预设定义的目录（/usr/lib）或
+    或-L选择选项指定d的目录  如 :  -lm  表示链接名为libm.a的函数库
+
