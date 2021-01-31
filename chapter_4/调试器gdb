@@ -1,0 +1,101 @@
+gdb调试对象是可执行文件，前提是被调试对象在使用gcc编译的时候加入-g 选项
+
+1.gdb 调试一个程序命令格式:
+#gdb 程序文件名
+
+如果要使gdb启动时不输出版权说明，可以在执行时加上-q选项,如:gdb -q test ,也可以在Linux
+提示符下，直接输入gdb,然后使用file命令装入要调试的程序
+如：#gdb -q
+(gdb) file test
+
+结束调试：
+（gdb）quit
+
+2.显示和查找程序源代码
+list 显示10行代码，若再次运行该命令显示接下来10行代码
+list 5,10 显示第5行到第10行的代码
+list test.c:5,10 显示源文件test.c中第5行到第10行的代码，在调试多个源文件很有用
+list get_sum  显示get_sum函数周围的代码
+list test.c:get_sum  显示test.c源文件中get_sum函数周围的代码
+
+如果调式过程中要运行linux 命令，则可以在gdb的提示符下输入shell命令 如 shell  ls
+
+search 和forward   从当前行向后查找第一个匹配的字符串，格式如下：
+search 字符串
+forward 字符串
+
+reverse-search 从当前行向前查找第一个匹配的字符串
+reverse-search 字符串
+
+3.执行程序和获得帮助
+使用gdb -q test 或 file test 只是装入程序但并没有运行，要是程序运行输入run
+（gdb） run
+
+要想更详细的了解gdb某个命令的使用方法，可以使用help
+(gdb) help list
+(gdb) help all
+
+4. 设置和管理断点
+ *以行号设置断点
+ (gdb) break 7
+ *以函数名设置断点
+ (gdb) break get_sum
+ (gdb) run
+ *以条件表达式设置断点(程序在运行过程中，当某个条件满足时，程序在某行中断暂停执行)
+ break 行号或函数名   if 条件
+ (gdb)break 7 if i==9
+
+ *整个程序运行中当条件表达式的值发生改变时程序就会暂停下来格式
+ watch 条件表达式
+ （gdb）watch i==9
+
+ *awatch在表达式的值发生改变或表达式的值被读取的时候，程序暂停执行
+
+ * 查看当前设置的中断点
+ (gdb) break 7
+ (gdb) break 15 if result==5050
+ (gdb) info breakpoints
+
+ * 使中断失效或有效
+ (gdb) info breakpoints
+ (gdb) disable 2
+ (gdb) info breakpoints
+ (gdb) enable 2
+ (gdb) info breakpoints
+ * 删除断点
+ clear :删除程序中所有的断点
+ clear 行号：删除此行的断点
+ clear 函数名：删除该函数的断点
+ delete  断点编号:删除指定编号的断点,如果一次删除多个，各个断点编号以空格隔开
+
+ * 查看和设置变量的值
+  print 命令一般用来打印变量或表达式的值
+  print 变量或表达式 :打印变量或表达式当前的值
+  print 变量=值: 对变量进行复制
+  print 表达式@要打印的值的个数n 打印以表达式值开始的n个数
+  如 print i<n
+
+   *whatis 命令(用来显示某个变量或表达式值的数据类型)
+   (gdb) whatis i
+   (gdb) whatis sum+0.5
+
+   * set 命令（用来给变量赋值，也可以设置gdb一行字符数或针对远程调试进行设置）
+   (gdb)set variable 变量=值
+
+   * 控制程序的执行
+    1.continue (让程序继续运行，直到下一个断点或运行完为止
+
+   * kill 命令 (该命令用于结束当前程序的调试)
+   (gdb) kill
+   *next 和step 命令（一次一条执行代码）
+   next 和step区别：next 会把该函数调用当作一条语句执行，再次输入next会执行函数调用后的语句
+   step 则会跟踪进入函数，一次一条地执行函数内的代码,直到函数内代码执行完，才执行函数调用后的语句
+
+  * nexti 和stepi 命令
+   用来单步执行一条机器指令，注意不是单步执行一行语句。单步执行一行语句是next 和step名.
+   如 for(i=0;i<n;i++) 多次输入 nexti 会分开执行，先i=0和i<n会分开执行,而next 一次执行完毕
+
+   gdb 一些命令可以简写 list 可以写成 li  ,countinue 可以写成cont
+
+
+
