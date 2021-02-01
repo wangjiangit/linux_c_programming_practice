@@ -13,6 +13,6 @@ int main() {
     }
 
     printf("1！+2！...+10!=%d\n",sum);
-
+    return 0;
 
 }
