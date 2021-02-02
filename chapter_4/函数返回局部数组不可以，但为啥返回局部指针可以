@@ -1,0 +1,28 @@
+#include <stdio.h>
+char * f1()
+{
+    char a[]="hello1";
+    return a;
+}
+char * f2()
+{
+    char *s="hello2";
+    return s;
+}
+void main()
+{
+    char *s1;
+    char *s2;
+    s1=f1();
+    s2=f2();
+    printf(s1);
+    printf(s2);
+}
+
+printf(s1)显示为奇怪的字符,为什么?
+
+
+cchar a[]="hello1";f1函数中的局部字符串数组变量a申请在堆栈区，所以当f1函数返回到main函数时，a的空间被释放了，
+所以s1所指向的空间内容是不确定的，于是就出现奇怪的字符。
+而f2中虽然字符指针s申请在堆栈区，但是常量字符串"hello2"申请在全局区的，当f2返回到main时，s被释放，但是s指向的字符串"hello2"因为存放在全局区，所以没有被释放，于是在main中还可以正确的显示出来。
+看下函数调用和局部变量、全局变量、动态申请变量方面的知识。那样就比较懂了。
