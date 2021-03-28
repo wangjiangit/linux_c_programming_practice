@@ -67,6 +67,149 @@ Makefile文件的基本单元是规则。一条规则指定一个或多个目标
 18.make 可以通过 -f othername 或 --file=othername 指定makefile文件名字
 
 19.一个完整的Makefile文件由5部分构成：显式规则，隐含规则，使用变量 ，文件指示和注释
+显式规则：指明了目标文件，目标文件的依赖文件，生成或更新目标文件所使用的命令。有些规则没有命令。
+隐含规则：由make根据目标文件（电信的是根据文件名的后缀）而自动推导出的规则。就是make根据目标文件的文件名，
+自动产生目标的依赖文件和生成目标的命令。
+如：module1.o:head1.h 产生
+module1.o:module1.c head1.h
+    gcc -c module1.c -o module1.o
+使用变量和注释比较好理解
+文件指示 : 包括3部分.makefile 包括makefile ,指定makefile文件中有效部分，一个多行命令
+
+注意点：
+       ** makefile文件中要书写$,需要书写2个$$,书写#需要写成\#,使用 \将几行连成一行
+       ** 依赖类型： foo : foo.c | somelib
+                    gcc -o foo foo.c somelib 如果foo.c过时，将导致foo重新生成，somelib过时则不会
+
+       ** 命令行属性 ： - 执行本命令行时如果遇到错误，继续执行而不退出make
+                        + 本行命令始终被执行，即使运行make 命令时使用了-n ,-q ,-t 选项
+                        @ 执行本命令行时不在屏幕上打印命令的内容
+                        命令行默认属性：打印出命令，命令遇到错误就退出make
+伪目标：
+    clean:
+        -rm  -f *.o   在shell中执行make不会被执行总被认为最新的，执行make clean才可以
+声明成  .PHONY :clean
+        clean：
+        -rm -f *.o
+这样make clean 始终被执行，就不会在本目录是否存在clean文件的问题，始终被执行
+
+如果要同时生成多个可执行文件可以这样：
+all : program1  program2 program3
+.PHONY :all
+program1: program1.c utils.h
+    gcc -o program1 program1.c
+program2: program2.c utils.h
+    gcc -o program2 program2.c
+program3: program3.c comm.h utils.h
+    gcc -o program3 program3.c
+
+#make all ,如果单独生成可以 #make program1
+
+搜索目录： 有时候会把源文件，头文件，库文件放在不同的目录里，这样可以使用VPATH或make 的vpath关键词指定
+VPATH=/usr/src:../header
+
+或 make vpath <pattern> <dirictory>
+ make vpath %.h ../headers
+ make vpath %.h headers:src
+ make vpath % usr
+
+ 使用变量（区分大小写）：
+    变量名 赋值符 变量值
+    赋值符有 := = += ?=    :=立即展开变量赋值  =递归展开变量赋值  ?=只有此变量在之前没有赋值的情况下才会对这个变量进行赋值 +=追加赋值符（对一个变量值进行追加）
+    引用变量 $(var) ${var}
+
+ 预定义变量：
+ 名字 初始值 说明
+ CC  cc  默认使用的编译器
+ CFLAGS -o  编译器选项
+ MAKE   make make命令
+ MAKEFLAGS 空  make命令选项
+ SHELL   默认使用的shell类型
+ PWD 运行make命令时的当前目录
+ AR  ar 库管理命令
+ ARFLADS -ruv  库管理命令选项
+ LIBSUFFIXE .a 库的后缀
+ A      a    库的扩展名
+
+ 例如：$(CC) -c module1.c  相当于 gcc -c module.c
+ 可以$(CC) = gcc 相当于对变量CC赋值了gcc
+
+自动变量：make运行中可以动态改变的 $@ $% $< $> $? $^ $+ $*
+
+$@ :表示一个规则中的目标文件名
+$% :当规则的目标文件是一个静态库文件时，$% 代表静态库的一个成员名 如foo.a(bar.o) $%就是bar.o
+$<:规则中的第一个依赖文件名.但如果规则中使用了隐含规则，那么$<的值是由隐含规则引入的第一个依赖文件名
+$>:适用于库文件，它的值是库名
+$?:所有比目标文件新的依赖列表，以空格分隔.如果目标文件是静态库文件名，代表是库成员（.o文件）
+$^:规则的所有依赖文件列表，使用空格分隔。如果目标是静态库文件，它所代表的只是所有库成员名。如果由重复的依赖文件，只记录一次引用
+$+:类型$^,但保留了依赖文件中重复出现的文件
+$*:它的值是目标文件去掉后缀后的名称
+以上自动变量只能用在规则命令中，不能出现在目标文件和依赖文件列表中，如果要出现在目标和依赖文件列表中，它们前面加上一个$
+如file1.o file2.o :$$* header.h
+   gcc -c $*.c -o $@
+
+隐含规则：基础是根据目标文件的扩展名，推到出 依赖文件或命令
+      C语言的隐含规则主要有2条：
+                            1.对于一个没有后缀的目标文件，如果Makefile文件中没有明确指定对应的依赖文件和编译命令，并且
+      当前目录能找到同名.c源文件，那么就自动为该目标建立规则。如
+      program:header1.h header2.h 就会建立如下规则：
+      program:program.c header1.h header2.h
+        gcc -o program  grogram.c 或 $(CC) $(CFLAGS)  $@ $<
+                            2.对于以.o结尾的目标文件，如果该目标文件没有依赖文件和编译命令并且可以在当前目录下能找到同名.c源文件，
+                            make就会为它建立一个规则以生成.o目标文件
+      program.o:header1.h header2.h 就会建立如下规则：
+      program.o：prgram.c header1.h header2.h
+        gcc -c program.c  -o program.o  或 $(CC)  -c  $<  $(CFLAGS) $@
+
+使用条件语句：
+例1
+libs_for_gcc = -lgnu
+normal_libs =
+ifeq ($(CC),gcc)  注意：如果想使用ifneq 代表2个参数不相等
+libs=$(libs_for_gcc)
+else
+libs=$(normal_libs)
+endif
+foo:foo.c
+    $(CC)  -o foo foo.c $(libs)
+例2
+bar =
+foo = $(bar)
+ifdef foo
+frobozz=yes
+else
+forbozz=no
+endif
+
+使用库：在linux中最后链接生成的可执行文件，如果链接的是一般的.o文件，是把整个.o文件的内容插入到可执行文件中，而如果
+链接的是库文件，则从库中找出程序需要的变量和函数，把它们装入可执行文件中。使用库可以大大节省空间，所以系统提供的标准函数
+都是以库的形式提供
+
+库中的成员表示形式 库名(成员名)  如  mylib.a(file.o) 表示静态库mylib.a(以.so结尾的是动态库)中一个名为file.o的文件.
+静态库一般也称为文档文件，是一些.o结尾的文件通常使用ar命令对它进行维护和管理
+格式如下
+库名：库名(成员1) 库名(成员2) ...
+或者
+库名:库名(成员1 成员2  ...)
+如：
+mylib:mylib(file1.o)
+    gcc -c file1
+    ar -ruv mylib file1.o
+    rm -f file1.o
+mylib:mylib(file2.o)
+     gcc -c file2
+     ar -ruv mylib file2.o
+     rm -f file2.o
+
+make 命令参数：
+ -C dir 或 --directory=dir   如 make -C /home/root  把/home/root 作为当前目录
+-f filename 或--file=filename 或 --makefile=filename
+-q 询问模式 不执行任何命令，make只是返回一个状态查询值，返回的状态值0表示没有目标需要重建，1表示存在需要重建的目标 2表示有错误发生
+-p  执行命令前，打印出make读取的makefile的所有数据（包括规则和变量的值），同时打印make版权信息
+-s 或--slient 执行但不显示执行的命令
+-n 只打印要执行的命令，但不执行命令
+
+
 
 
 
