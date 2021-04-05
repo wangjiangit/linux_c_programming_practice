@@ -14,3 +14,23 @@
     S_IROTH 00004 其他用户具可读取权限
     S_IWOTH 00002 其他用户具可写入权限
     S_IXOTH 00001 其他用户具可执行权限
+3.C语言标准库函数fopen,fclose,fread,fwrite 和fseek 都是对creat,open,close,read,write,lseek等系统调用的封装，可移植性比较好
+4.文件描述符是Linux/Unix特有的，是一个非负整数，文件描述符取值范围为0-NR_OPEN （NR_OPEN为255），每一个程序最多只能打开256个文件
+5.打开文件方式如下：
+O_RDONLY　　只读打开
+O_WRONLY　 只写打开
+O_RDWR 读写打开
+上面三个常量必须指定一个并且只能指定一个，下面一些常量则是可选的：
+
+O_APPEND　　将写入追加到文件的尾端
+O_CREAT 若文件不存在，则创建它。使用该选项时，需要第三个参数mode，用来指定新文件的访问权限位
+O_EXCL 如果同时指定了O_CREAT，而文件已经存在，则会出错
+O_TRUNC 如果此文件存在，而且为只写或读写模式成功打开，则将其长度截短为0
+O_NOCTTY 如果pathname指的是终端设备，则不将该设备分配作为此进程的控制终端
+O_NONBLOCK 如果pathname指的是一个FIFO文件、块设备文件或字符设备文件，则此选项将文件的本次打开操作和后续的I/O操作设置为非阻塞模式
+6.creat()相当于open(const char* pathname,(O_CREAT|O_WRONLY|O_TRUNC)),creat 会覆盖原文件
+ creat 只能以只写的方式打开创建的文件，creat无法创建设备文件，设备文件的创建要使用mknod函数
+ close 函数调用成功时并不保证数据能全部写回硬盘
+ read ,write,lseek 读/写/指针移动 来自 include <unistd.h>
+
+
