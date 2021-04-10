@@ -45,5 +45,31 @@ O_NONBLOCK 如果pathname指的是一个FIFO文件、块设备文件或字符设
   强制性锁是由内核执行的。当文件被上锁来进行写入操作时，在锁定该文件的进程释放该锁之前，内核会阻止任何对该文件的读或写访问，每次读或写访问都得检查锁是否存在。
 
  单个进程在一个字节上只能设置一种锁，新的锁会取代旧的锁，锁的不兼容性规则是针对多个进程的
+9.文件属性获取与设置
+stat()   fstat()   lstat() 获取文件属性
+chown/fchown/lchown 更变所属组
+truncate/ftruncate 用于改变文件大小
+utime   更改文件的st_time和st_ctime域
+int utime(const char *filename, const struct utimbuf *times);
+umask 屏蔽字，权限权限
+unlink()删除文件
+rmdir() 删除目录
+remove()封装两者
+文件删除如果有进程在使用它，等进程使用完后在删除
+目录创建和删除
+mkdir()
+rmdir()
+获取当前目录
+getcwd()
+get_current_dir_name()  ,如果定义_GNU_SOURCE
+getwd() ,如果定义_BSD_SOURCE 或_XOPEN_SOURCE_EXTENDED
+设置工作目录
+fchdir()
+chdir()并不能真正改变，因为其只能改变本进程的，而无法改变其他进程的。
 
-
+获取目录信息
+opendir();打开
+readdir();读取
+closedir();关闭
+DIR *形态的目录流
+struct dirent {}结构体
