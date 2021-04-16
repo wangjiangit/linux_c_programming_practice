@@ -3,7 +3,7 @@
 #include<sys/types.h>
 #include<unistd.h>
 
-int main(int argc, char **argv, char **environ)
+int main(int argc, char *argv[], char **environ)
 {
     int i;
     printf("I am a  process image!\n");

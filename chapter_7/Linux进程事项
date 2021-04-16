@@ -54,3 +54,48 @@
     exec这些函数调用并没有生成新进程，一个进程一旦调用exec函数，系统把代码段替换成新的程序的代码，废弃原来的数据段和堆栈段，并为新程序分配新的数据段和堆栈段
     唯一保留的是进程ID
     exec这些函数执行可以是二进制的可执行文件，也可以是shell脚本，但必须是#!interpretername [arg]   如/bin/sh 或/bin/php
+13.等待子进程结束
+    wait函数：父进程一旦调用了wait就立即阻塞自己，由wait自动分析是否当前进程的某个子进程已经退出，如果让它找到了这样一个已经变成僵尸的子进程，wait就会收集这个子进程的信息，并把它彻底销毁后返回；如果没有找到这样一个子进程，wait就会一直阻塞在这里，直到有一个出现为止。
+    1 当父进程忘了用wait()函数等待已终止的子进程时,子进程就会进入一种无父进程的状态,此时子进程就是僵尸进程.
+    2 wait()要与fork()配套出现,如果在使用fork()之前调用wait(),wait()的返回值则为-1,正常情况下wait()的返回值为子进程的PID.
+    3 如果先终止父进程,子进程将继续正常进行，只是它将由init进程(PID 1)继承,当子进程终止时,init进程捕获这个状态.
+    4 参数status用来保存被收集进程退出时的一些状态，它是一个指向int类型的指针。但如果我们对这个子进程是如何死掉毫不在意，只想把这个僵尸进程消灭掉，（事实上绝大多数情况下，我们都会这样想），我们就可以设定这个参数为NULL，就像下面这样：
+    pid = wait(NULL);
+    如果成功，wait会返回被收集的子进程的进程ID，如果调用进程没有子进程，调用就会失败，此时wait返回-1，同时errno被置为ECHILD。
+    1，WIFEXITED(status)这个宏用来指出子进程是否为正常退出的，如果是，它会返回一个非零值。
+    （请注意，虽然名字一样，这里的参数status并不同于wait唯一的参数–指向整数的指针status，而是那个指针所指向的整数，切记不要搞混了。）
+    2， WEXITSTATUS(status)当WIFEXITED返回非零值时，我们可以用这个宏来提取子进程的返回值，如果子进程调用exit(5)退出，WEXITSTATUS(status)就会返回5；如果子进程调用exit(7)，WEXITSTATUS(status)就会返回7。请注意，如果进程不是正常退出的，也就是说，WIFEXITED返回0，这个值就毫无意义。
+    waitpid函数：
+    pid从本质上讲，系统调用waitpid和wait的作用是完全相同的，但waitpid多出了两个可由用户控制的参数pid和options，从而为我们编程提供了另一种更灵活的方式。下面我们就来详细介绍一下这两个参数：
+    从参数的名字pid和类型pid_t中就可以看出，这里需要的是一个进程ID。但当pid取不同的值时，在这里有不同的意义。
+    下面对pid的不同取值情况的说明：
+    >0 表示回收指定ID的子进程
+    -1  表示回收任意子进程（相当于wait）
+    0 表示回收和当前调用waitpid一个组的所有子进程
+    <-1 表示回收指定进程组内的任意子进程，比如-6610表示回收进程组id为6610的任意子进程
+    附：一次wait或waitpid调用只能清理掉一个子进程，清理多个子进程应该使用循环调用多次 。
+    Options
+    参数options提供了一些额外的选项来控制waitpid，参数option可以为0或可以用"|"运算符把它们连接起来使用，比如：
+    ret=waitpid(-1,NULL,WNOHANG | WUNTRACED);
+    如果我们不想使用它们，也可以把options设为0，如：
+    ret=waitpid(-1,NULL,0);
+    WNOHANG 若pid指定的子进程没有结束，则waitpid()函数返回0，不予以等待。若结束，则返回该子进程的ID。
+    WUNTRACED 若子进程进入暂停状态，则马上返回，但子进程的结束状态不予以理会。WIFSTOPPED(status)宏确定返回值是否对应与一个暂停子进程。
+    返回值和错误
+    waitpid的返回值比wait稍微复杂一些，一共有3种情况：
+    当正常返回的时候，waitpid返回收集到的子进程的进程ID
+    如果设置了选项WNOHANG，而调用中waitpid发现没有已退出的子进程可收集，则返回0；
+    如果调用中出错，则返回-1，这时errno会被设置成相应的值以指示错误所在；
+    当pid所指示的子进程不存在，或此进程存在，但不是调用进程的子进程，waitpid就会出错返回，这时errno被设置为ECHILD；
+14.经常其他操作
+    getpid 获取进程id
+    getgid 获取组id
+    内核对进程存取文件的许可权检查，是通过考查进程的有效用户id来实现的
+
+15.改变进程优先级
+    nice ,getpriority ,getpriority
+    nice 相当于执行
+    int nice(int increment){
+        int oldpro=getpriority(PRIO_PROCESS,getpid());
+        return setpriority(PRIO_PROCESS,getpid(),oldpro+increment)
+    }
